@@ -11,16 +11,16 @@ The following code is for the assignment using data from QFISH.
 *Note to self remember when copying path of file that the \ have to be changed to /
 
 ```{r}
-install.packages("usethis")
+#install.packages("usethis")
 library(usethis)
 use_git_config(user.name = "hanna-shrubshall", user.email = "hanna.shrubshall@gmail.com")
-Sharks <- read.csv("E:/github/MB5370-Module04/data/export.csv")
+Sharks <- read.csv("C:/Users/Adam/Desktop/github/MB5370-Assignmet/data/export.csv")
 ```
 
 #Loading the required packages to create my plot 
 ```{r}
 library(tidyverse) #this is for ggplot 
-library(viridis) #this is for a differnet colour scheme 
+library(viridis) #this is for a different colour scheme 
 library(hexbin)
 ```
 
