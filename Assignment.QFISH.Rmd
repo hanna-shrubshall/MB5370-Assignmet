@@ -17,24 +17,22 @@ use_git_config(user.name = "hanna-shrubshall", user.email = "hanna.shrubshall@gm
 
 #install and load packages 
 #install.packages(tidyverse)
-
 library(tidyverse)
 library(ggplot2)
-
-
 ```
 
 ```{r}
-
 #read in the data
-df <- read_csv("C:/Users/Adam/Desktop/github (1)/github/MB5370-Assignmet/data/Sharks.csv", col_names = FALSE)
+df <- read_csv("E:/github (1)/github/MB5370-Assignmet/data/Sharks.csv", col_names = FALSE)
 
+#pivoting the table so that the years are all in one column 
 years <- df |> filter(X2 == 2001) |> pivot_longer(everything()) |> 
   select(value) |> rename(Year = value) |> 
   mutate(Year = case_when(!str_detect(Year, "Total") ~ Year)) |>
   drop_na(Year) |> 
   unique()
-  
+
+#Puts all the species into a column 
 animal <- df |> filter(X2 == "Mammal")|> pivot_longer(everything()) |> 
   select(value) |> rename(Species = value) |> 
   unique() |> 
@@ -44,44 +42,48 @@ animal <- df |> filter(X2 == "Mammal")|> pivot_longer(everything()) |>
 
 #Relocationg row
 animal <- animal |> slice(-3) |> bind_rows(animal |> slice(3))
- 
+
+#Merging the animals with the years into a tidy dataset
 animal_year <- merge(animal, years)
 
+#Changing the name of the first column to Area and changing the title of Grand Total to Location Grand Total 
 area <- df |> select(1) |> filter(!row_number() %in% c(1:3)) |> 
-  rename(Area = X1) |> 
-  mutate(Area = case_when(Area == "Grand Total" ~ "Area_Grand_Total",
-                          T ~ Area))
+  rename(Location = X1) |> 
+  mutate(Location = case_when(Location == "Grand Total" ~ "Location_Grand_Total",
+                          T ~ Location))
 
-animal_year_area <- merge(area, animal_year) |> mutate(Area = as.factor(Area)) |> 
-  arrange(ordered(Area,
+#Merging the Area with 
+animal_year_area <- merge(area, animal_year) |> mutate(Location = as.factor(Location)) |> 
+  arrange(ordered(Location,
                   levels = c("Bribie Island", "Bundaberg", "Cairns", "Capricorn Coast",
                              "Gladstone", "Gold Coast", "Mackay", "Nth Stradbroke Is.",
                              "Rainbow Beach", "Sunshine Coast North", "Sunshine Coast South",
                              "Sunshine Coast South & Bribie Island", "Townsville", "Area_Grand_Total")))
-  
+
+
+#This makes the species count tidier and skips the first two rows as they are not relevant information 
 observations  <- df |> select(2:ncol(df)) |> filter(!row_number() %in% c(1, 2, 3)) |> 
   select(!last_col()) |> 
   select(where(~!all(is.na(.x)))) |> pivot_longer(everything(), names_to = "names", values_to = "values") |> 
   select(!names)
 
+#This combines all the variables into a tidy table 
 all_observations <- cbind(animal_year_area, observations) |> mutate(values = as.numeric(values),
                                                                     Year = as.numeric(Year))
 
+#Calculates the total number of observations for each location 
 grand_total <- df |> filter(!row_number() %in% c(1, 2, 3)) |> 
   select(1,last_col()) |> 
-  rename(Area = X1, Total_number_of_observations = X118) |> 
-  mutate(Area = case_when(Area == "Grand Total" ~ "Area_Grand_Total",
-                          T ~ Area))
-
-rm(animal, animal_year, animal_year_area, years, area, observations)
-  
+  rename(Location = X1, Total_number_of_observations = X118) |> 
+  mutate(Location = case_when(Location == "Grand Total" ~ "Location_Grand_Total",
+                          T ~ Location))
 ```
 
 
 ```{r}
-
-ggplot(filter(all_observations, Area != "Area_Grand_Total")) +
+#Creating plots 
+ggplot(filter(all_observations, Location != "Location_Grand_Total")) +
   geom_line(aes(x = Year, y = values, group = Species, colour = Species)) +
-  facet_wrap(~Area, nrow = 2)
+  facet_wrap(~Location, nrow = 2)
 ```
 
