@@ -7,38 +7,81 @@ Author: Hanna Shrubshall
 
 ##Assignment. ENd-to-end data analysis in R 
 The following code is for the assignment using data from QFISH. 
-
 *Note to self remember when copying path of file that the \ have to be changed to /
 
 ```{r}
-#install.packages("usethis")
+#linking the code to my GitHub repository 
 library(usethis)
 use_git_config(user.name = "hanna-shrubshall", user.email = "hanna.shrubshall@gmail.com")
-Sharks <- read.csv("C:/Users/Adam/Desktop/github/MB5370-Assignmet/data/export.csv")
-```
 
-#Loading the required packages to create my plot 
-```{r}
-library(tidyverse) #this is for ggplot 
-library(viridis) #this is for a different colour scheme 
-library(hexbin)
-```
 
-#Cleaning up the data in R
-- the following code is used to clean up the data so it is easier for R to read and easier to manipulate to place into a plot 
-- Firstly you need to have Hmisc installed and downloaded into R
-- Make a copy of the dataset 
+#install and load packages 
+#install.packages(tidyverse)
+
+library(tidyverse)
+library(ggplot2)
+
+
+```
 
 ```{r}
-#install.packages("Hmisc")
-library("Hmisc")
 
-shark1 <- Sharks 
+#read in the data
+df <- read_csv("C:/Users/Adam/Desktop/github (1)/github/MB5370-Assignmet/data/Sharks.csv", col_names = FALSE)
+
+years <- df |> filter(X2 == 2001) |> pivot_longer(everything()) |> 
+  select(value) |> rename(Year = value) |> 
+  mutate(Year = case_when(!str_detect(Year, "Total") ~ Year)) |>
+  drop_na(Year) |> 
+  unique()
+  
+animal <- df |> filter(X2 == "Mammal")|> pivot_longer(everything()) |> 
+  select(value) |> rename(Species = value) |> 
+  unique() |> 
+  mutate(Species = case_when(is.na(Species) ~ "Total",
+                                         T ~ Species)) |>
+  filter(Species != "Area")
+
+#Relocationg row
+animal <- animal |> slice(-3) |> bind_rows(animal |> slice(3))
+ 
+animal_year <- merge(animal, years)
+
+area <- df |> select(1) |> filter(!row_number() %in% c(1:3)) |> 
+  rename(Area = X1) |> 
+  mutate(Area = case_when(Area == "Grand Total" ~ "Area_Grand_Total",
+                          T ~ Area))
+
+animal_year_area <- merge(area, animal_year) |> mutate(Area = as.factor(Area)) |> 
+  arrange(ordered(Area,
+                  levels = c("Bribie Island", "Bundaberg", "Cairns", "Capricorn Coast",
+                             "Gladstone", "Gold Coast", "Mackay", "Nth Stradbroke Is.",
+                             "Rainbow Beach", "Sunshine Coast North", "Sunshine Coast South",
+                             "Sunshine Coast South & Bribie Island", "Townsville", "Area_Grand_Total")))
+  
+observations  <- df |> select(2:ncol(df)) |> filter(!row_number() %in% c(1, 2, 3)) |> 
+  select(!last_col()) |> 
+  select(where(~!all(is.na(.x)))) |> pivot_longer(everything(), names_to = "names", values_to = "values") |> 
+  select(!names)
+
+all_observations <- cbind(animal_year_area, observations) |> mutate(values = as.numeric(values),
+                                                                    Year = as.numeric(Year))
+
+grand_total <- df |> filter(!row_number() %in% c(1, 2, 3)) |> 
+  select(1,last_col()) |> 
+  rename(Area = X1, Total_number_of_observations = X118) |> 
+  mutate(Area = case_when(Area == "Grand Total" ~ "Area_Grand_Total",
+                          T ~ Area))
+
+rm(animal, animal_year, animal_year_area, years, area, observations)
+  
 ```
 
-###Changing the labels/headers of the data 
+
 ```{r}
-label(shark1) #this checks the labels of the data 
-```
 
+ggplot(filter(all_observations, Area != "Area_Grand_Total")) +
+  geom_line(aes(x = Year, y = values, group = Species, colour = Species)) +
+  facet_wrap(~Area, nrow = 2)
+```
 
