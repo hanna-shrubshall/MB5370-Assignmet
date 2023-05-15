@@ -17,13 +17,18 @@ use_git_config(user.name = "hanna-shrubshall", user.email = "hanna.shrubshall@gm
 
 #install and load packages 
 #install.packages(tidyverse)
+#install.packages(scales)
+install.packages("ggridges")
 library(tidyverse)
 library(ggplot2)
+library(scales)
+library(ggridges)
+library(RColorBrewer)
 ```
 
 ```{r}
 #read in the data
-df <- read_csv("E:/github (1)/github/MB5370-Assignmet/data/Sharks.csv", col_names = FALSE)
+df <- read_csv("C:/Users/Adam/Desktop/github (1)/github/MB5370-Assignmet/data/Sharks.csv", col_names = FALSE)
 
 #pivoting the table so that the years are all in one column 
 years <- df |> filter(X2 == 2001) |> pivot_longer(everything()) |> 
@@ -83,12 +88,11 @@ grand_total <- df |> filter(!row_number() %in% c(1, 2, 3)) |>
 ```{r}
 #Creating plots 
 ggplot(filter(all_observations, Location != "Location_Grand_Total")) +
-  geom_line(aes(x = Year, y = values, group = Species, colour = Species)) +
-  facet_wrap(~Location, nrow = 2)
+  geom_line(aes(x = Year, y = values, group = Species, colour = Species)) +   facet_wrap(~Location, nrow = 4)
 
 ggplot(filter(all_observations, Location != "Location_Grand_Total")) +
   geom_line(aes(x = Year, y = values, group = Species, colour = Species)) +
-  facet_grid(~Location)+
+  facet_grid(~Location, vars(Species))+
 theme( legend.position="bottom",
         legend.title=element_blank(),
         legend.text=element_text(size=8),
@@ -100,6 +104,30 @@ theme( legend.position="bottom",
         panel.grid.minor.y = element_blank(), 
       panel.grid.major.x = element_blank(), 
       panel.grid.major.y = element_line(colour = "black"))
+
+
+```
+
+```{r}
+#trying to make the plots horizontal 
+Sharks <- ggplot(filter(all_observations, Location != "Location_Grand_Total")) +
+  geom_line(aes(x = Year, y = values, group = Species, colour = Species))+   facet_wrap(~Location, nrow = 4)
+       
+
+Sharks + facet_grid(vars(Location), scales = "fixed", nrow(14)) + 
+  theme(panel.background = element_rect(fill = "white"),
+ legend.key = element_rect(fill = "white"),
+ legend.position = "bottom",
+ legend.title = element_text(face = "bold"), 
+ axis.text.x = element_text(face="bold", 
+                           size=8, angle=45),
+          axis.text.y = element_text(face="bold",  
+                           size=8, angle=45), 
+panel.grid.major = element_line(color = "grey",
+                                        size = 0.25,
+                                        linetype = 1))
+
+  
 
 
 ```
