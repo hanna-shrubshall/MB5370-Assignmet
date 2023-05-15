@@ -18,12 +18,14 @@ use_git_config(user.name = "hanna-shrubshall", user.email = "hanna.shrubshall@gm
 #install and load packages 
 #install.packages(tidyverse)
 #install.packages(scales)
-install.packages("ggridges")
+#install.packages("ggridges")
+install.packages("tmap")
 library(tidyverse)
 library(ggplot2)
 library(scales)
 library(ggridges)
 library(RColorBrewer)
+library(tmap)
 ```
 
 ```{r}
@@ -109,12 +111,19 @@ theme( legend.position="bottom",
 ```
 
 ```{r}
-#trying to make the plots horizontal 
-Sharks <- ggplot(filter(all_observations, Location != "Location_Grand_Total")) +
-  geom_line(aes(x = Year, y = values, group = Species, colour = Species))+   facet_wrap(~Location, nrow = 4)
-       
+#trying to make the plots horizontal
 
-Sharks + facet_grid(vars(Location), scales = "fixed", nrow(14)) + 
+test <- all_observations %>% filter(Species != "Total")
+
+Sharks <- ggplot(filter(test, Location != "Location_Grand_Total")) +
+  geom_point(aes(x = Year, y = values, group = Species, colour = Species))+  facet_wrap(~Location, nrow = 4) 
+Sharks
+       
+```
+
+
+```{r}
+Sharks + facet_wrap(~Location, scales = "fixed", ncol = 2) + 
   theme(panel.background = element_rect(fill = "white"),
  legend.key = element_rect(fill = "white"),
  legend.position = "bottom",
@@ -125,10 +134,29 @@ Sharks + facet_grid(vars(Location), scales = "fixed", nrow(14)) +
                            size=8, angle=45), 
 panel.grid.major = element_line(color = "grey",
                                         size = 0.25,
-                                        linetype = 1))
+                                        linetype = 1)) +
+  theme_classic()
+```
 
-  
+```{r}
+#making a boxplot in R 
+```
 
 
+```{r}
+#inputting data on t_map
+#this creates the map of Australia 
+tm_shape("Sharks") + 
+  tm_polygons("Sharks")
+
+#bbox expands the extent of the map so all data points are detected 
+tmap_mode("view")+
+tm_shape(shelf, bbox = sdat) +
+   tm_borders("white", lwd = .5)
+  tm_shape(aus) + 
+  tm_polygons(alpha = 0, border.alpha = 1) + 
+  tm_shape(sdat) + 
+  tm_dots(col = "route")+
+    tm_basemap("Esri.WorldImagery") +  tm_tiles("Stamen.TonerLabels", ) 
 ```
 
